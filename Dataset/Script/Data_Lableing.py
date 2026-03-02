@@ -10,7 +10,7 @@ print("Initial Shape:", df.shape)
 
 
 # Define Percentile-Based Pollutant Thresholds
-# (Using 65th percentile for better class balance)
+# (Using 65th percentile for better class balance).Because In the Dataset We do not have Extreme Values which are matched to AQI Rule
 
 
 no2_high = df['no2'].quantile(0.65)
