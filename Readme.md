@@ -153,25 +153,11 @@ Interactive dashboard built using **Streamlit**.
 
 ### Dashboard Screenshots
 
-Add dashboard screenshots in `Images/Dashboard/` and display them here.
-
-Example placeholders:
-
-- `Images/Dashboard/image.png`
-- `Images/Dashboard/Map.png`
-- `Images/Dashboard/Graph.png`
-- `Images/Dashboard/Al_Model.png`
-- `Images/Dashboard/Source.png`
-
-When screenshots are available, use:
-
-```markdown
 ![Dashboard Overview](Images/Dashboard/image.png)
 ![Dashboard Map View](Images/Dashboard/Map.png)
 ![Source Distribution View](Images/Dashboard/Source.png)
 ![Dashboard Graph View](Images/Dashboard/Graph.png)
 ![AI Model Overview](Images/Dashboard/AI_Model.png)
-```
 
 ---
 
