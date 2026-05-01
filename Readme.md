@@ -251,14 +251,28 @@ Environ_Scan_Project/
 ### 1. Install Dependencies
 
 ```bash
-pip install pandas numpy streamlit scikit-learn plotly folium joblib xgboost
+pip install -r requirements.txt
 ```
 
-### 2. Run Command
+### 2. Configure Environment
+
+1. Copy `.env.example` to `.env`
+2. Add your OpenWeather API key to `.env`
+3. Get a free API key from: https://openweathermap.org/api
+
+### 3. Train Models (Optional)
+
+```bash
+python ModelScript/EnviroScan_Model.py
+```
+
+### 4. Run Dashboard
 
 ```bash
 streamlit run Model_6_Dashboard/Dashboard.py
 ```
+
+For detailed setup instructions, see [SETUP.md](SETUP.md)
 
 ---
 

@@ -1,88 +1,111 @@
-# EnviroScan - Pollution Source Classification Pipeline
+"""
+EnviroScan - Pollution Source Classification Pipeline
 
-# Description:
-# - Data loading & cleaning
-# - Feature engineering
-# - Noise injection
-# - Hyperparameter tuning
-# - Model training (RF, DT, XGB)
-# - Evaluation
-# - Feature importance
-# - Model saving
+Description:
+- Data loading & cleaning
+- Feature engineering
+- Noise injection
+- Hyperparameter tuning
+- Model training (RF, DT, XGB)
+- Evaluation
+- Feature importance
+- Model saving
+"""
 
-import os
+import sys
+from pathlib import Path
+
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
 import pandas as pd
 import numpy as np
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
-# from datetime import datetime
+import logging
+from datetime import datetime
 
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import train_test_split, GridSearchCV,RandomizedSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from xgboost import XGBClassifier
 
+# Import project configuration
+from config import (
+    FINAL_DATASET_LABELED, MODELS_DIR, ALL_FEATURES, TARGET_COLUMN,
+    RANDOM_STATE, TEST_SIZE, NOISE_LEVEL, RF_PARAM_GRID, DT_PARAM_GRID, XGB_PARAM_DIST,
+    RANDOM_FOREST_MODEL, DECISION_TREE_MODEL, XGBOOST_MODEL, LABEL_ENCODER
+)
+from utils import load_dataset, remove_missing_values, add_noise_to_features, save_dataframe
 
-# Configuration
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
-DATA_PATH = "Dataset/FInal_Dataset_Labeled.csv"
-MODEL_DIR = "Models"
-TEST_SIZE = 0.2
-RANDOM_STATE = 42
-NOISE_LEVEL = 0.15
+# Ensure model directory exists
+MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-os.makedirs(MODEL_DIR, exist_ok=True)
+timestamp = datetime.now().strftime("%Y%m%d_%H%M")
 
-# timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-
+# ============================================
 # Step 1: Load Dataset
+# ============================================
 
-print("🚀 Loading Dataset...")
-df = pd.read_csv(DATA_PATH)
-print(f"Dataset Shape: {df.shape}")
+logger.info("Loading Dataset...")
+try:
+    df = load_dataset(FINAL_DATASET_LABELED, required_columns=ALL_FEATURES + [TARGET_COLUMN])
+    logger.info(f"Dataset Shape: {df.shape}")
+except Exception as e:
+    logger.error(f"Failed to load dataset: {e}")
+    sys.exit(1)
 
+# ============================================
 # Step 2: Data Cleaning
+# ============================================
 
-print("\n🔍 Checking Missing Values...")
-print(df.isnull().sum())
+logger.info("Checking Missing Values...")
+missing_count = df.isnull().sum().sum()
+logger.info(f"Total missing values: {missing_count}")
 
-df = df.dropna().reset_index(drop=True)
-print("✅ Missing values removed")
+df = remove_missing_values(df, strategy='drop')
+logger.info("Missing values removed")
 
+# ============================================
 # Step 3: Feature Selection
+# ============================================
 
-features = [
-    'co','no2','o3','pm10','pm25','so2',
-    'Temperature','Humidity','Wind Speed','Wind Direction',
-    'dist_to_road','dist_to_industry','dist_to_dump','dist_to_farmland'
-]
+X = df[ALL_FEATURES].copy()
+y = df[TARGET_COLUMN]
 
-X = df[features].copy()
-y = df['pollution_source']
+logger.info(f"Features: {len(ALL_FEATURES)}")
+logger.info(f"Samples: {len(X)}")
 
 # Encode target labels
-
 le = LabelEncoder()
 y_encoded = le.fit_transform(y)
 
-print("\n📌 Class Mapping:")
+logger.info("Class Mapping:")
 for idx, class_name in enumerate(le.classes_):
-    print(f"{class_name} --> {idx}")
+    logger.info(f"  {class_name} --> {idx}")
 
-# Step 4: Add Controlled Noise (to reduce rule-based bias)
+# ============================================
+# Step 4: Add Controlled Noise
+# ============================================
 
-print("\n⚙ Adding Noise to Features...")
-for col in features:
-    std_dev = X[col].std()
-    noise = np.random.normal(0, NOISE_LEVEL * std_dev, X.shape[0])
-    X.loc[:, col] += noise
+logger.info("Adding Noise to Features...")
+X = add_noise_to_features(X, noise_level=NOISE_LEVEL)
+logger.info("Noise added successfully")
 
-print("✅ Noise added successfully")
-
+# ============================================
 # Step 5: Train-Test Split
+# ============================================
 
 X_train, X_test, y_train, y_test = train_test_split(
     X,
@@ -92,115 +115,126 @@ X_train, X_test, y_train, y_test = train_test_split(
     stratify=y_encoded
 )
 
-print(f"\nTrain Size: {X_train.shape}")
-print(f"Test Size: {X_test.shape}")
+logger.info(f"Train Size: {X_train.shape}")
+logger.info(f"Test Size: {X_test.shape}")
 
+# ============================================
 # Step 6: Random Forest with Hyperparameter Tuning
+# ============================================
 
-print("\n🌲 Training Random Forest (GridSearch)...")
-
-rf_param_grid = {
-    'n_estimators': [100],
-    'max_depth': [4, 6, 8],
-    'min_samples_split': [8, 12],
-    'min_samples_leaf': [5, 8]
-}
+logger.info("Training Random Forest (GridSearch)...")
 
 rf_grid = GridSearchCV(
     RandomForestClassifier(random_state=RANDOM_STATE),
-    rf_param_grid,
+    RF_PARAM_GRID,
     cv=5,
     scoring='f1_weighted',
-    n_jobs=-1
+    n_jobs=-1,
+    verbose=1
 )
 
 rf_grid.fit(X_train, y_train)
 rf_model = rf_grid.best_estimator_
 
-print("Best RF Parameters:", rf_grid.best_params_)
+logger.info(f"Best RF Parameters: {rf_grid.best_params_}")
 
+# ============================================
 # Evaluation Function
+# ============================================
 
 def evaluate_model(model, model_name):
-    print(f"\n📊 Evaluating {model_name}...")
+    """Evaluate model performance and generate confusion matrix"""
+    logger.info(f"Evaluating {model_name}...")
     
     y_train_pred = model.predict(X_train)
     y_test_pred = model.predict(X_test)
     
-    print("Training Accuracy:", accuracy_score(y_train, y_train_pred))
-    print("Testing Accuracy :", accuracy_score(y_test, y_test_pred))
+    train_acc = accuracy_score(y_train, y_train_pred)
+    test_acc = accuracy_score(y_test, y_test_pred)
     
-    print("\nClassification Report:")
+    logger.info(f"Training Accuracy: {train_acc:.4f}")
+    logger.info(f"Testing Accuracy: {test_acc:.4f}")
+    
+    logger.info("Classification Report:")
     print(classification_report(y_test, y_test_pred, target_names=le.classes_))
     
+    # Confusion Matrix
     cm = confusion_matrix(y_test, y_test_pred)
-    plt.figure(figsize=(6,5))
+    plt.figure(figsize=(8, 6))
     sns.heatmap(cm, annot=True, fmt='d',
                 xticklabels=le.classes_,
-                yticklabels=le.classes_)
+                yticklabels=le.classes_,
+                cmap='Blues')
     plt.title(f"{model_name} - Confusion Matrix")
     plt.xlabel("Predicted")
     plt.ylabel("Actual")
     plt.tight_layout()
+    
+    # Save confusion matrix
+    cm_path = IMAGES_DIR / f"{model_name.replace(' ', '_')}_Confusion_Matrix.png"
+    plt.savefig(cm_path, dpi=300, bbox_inches='tight')
+    logger.info(f"Confusion matrix saved to {cm_path}")
     plt.show()
+    
+    return train_acc, test_acc
 
 # Evaluate Random Forest
-evaluate_model(rf_model, "Random Forest")
+rf_train_acc, rf_test_acc = evaluate_model(rf_model, "Random Forest")
 
+# ============================================
 # Feature Importance (Random Forest)
+# ============================================
 
-print("\n🔎 Feature Importance (Random Forest)")
+logger.info("Analyzing Feature Importance...")
 importances = rf_model.feature_importances_
 
 importance_df = pd.DataFrame({
-    'Feature': features,
+    'Feature': ALL_FEATURES,
     'Importance': importances
 }).sort_values(by='Importance', ascending=False)
 
-print(importance_df)
+print("\nFeature Importance:")
+print(importance_df.to_string(index=False))
 
-plt.figure()
+plt.figure(figsize=(10, 6))
 plt.barh(importance_df['Feature'], importance_df['Importance'])
 plt.gca().invert_yaxis()
+plt.xlabel("Importance Score")
 plt.title("Feature Importance - Random Forest")
 plt.tight_layout()
+
+# Save feature importance plot
+fi_path = IMAGES_DIR / "Feature_Importance.png"
+plt.savefig(fi_path, dpi=300, bbox_inches='tight')
+logger.info(f"Feature importance plot saved to {fi_path}")
 plt.show()
 
+# ============================================
 # Step 7: Decision Tree
+# ============================================
 
-print("\n🌳 Training Decision Tree...")
-
-dt_param_grid = {
-    'max_depth': [3, 5, 7],
-    'min_samples_split': [10, 20],
-    'min_samples_leaf': [5, 10]
-}
+logger.info("Training Decision Tree...")
 
 dt_grid = GridSearchCV(
     DecisionTreeClassifier(random_state=RANDOM_STATE),
-    dt_param_grid,
+    DT_PARAM_GRID,
     cv=5,
     scoring='f1_weighted',
-    n_jobs=-1
+    n_jobs=-1,
+    verbose=1
 )
 
 dt_grid.fit(X_train, y_train)
 dt_model = dt_grid.best_estimator_
 
-print("Best DT Parameters:", dt_grid.best_params_)
-evaluate_model(dt_model, "Decision Tree")
+logger.info(f"Best DT Parameters: {dt_grid.best_params_}")
+dt_train_acc, dt_test_acc = evaluate_model(dt_model, "Decision Tree")
 
+# ============================================
 # Step 8: XGBoost
+# ============================================
 
-print("\n🚀 Training XGBoost...")
-
-param_dist = {
-    'n_estimators': [100, 200, 300],
-    'max_depth': [3, 4, 5],
-    'learning_rate': [0.01, 0.05, 0.1],
-    'subsample': [0.8, 1.0],
-    'colsample_bytree': [0.8, 1.0]
-}
+logger.info("Training XGBoost...")
 
 xgb = XGBClassifier(
     random_state=RANDOM_STATE,
@@ -209,34 +243,64 @@ xgb = XGBClassifier(
 
 random_search = RandomizedSearchCV(
     xgb,
-    param_distributions=param_dist,
+    param_distributions=XGB_PARAM_DIST,
     n_iter=10,
     cv=3,
     scoring='accuracy',
     n_jobs=-1,
-    random_state=RANDOM_STATE
+    random_state=RANDOM_STATE,
+    verbose=1
 )
 
 random_search.fit(X_train, y_train)
-
 xgb_model = random_search.best_estimator_
 
-print("Best Parameters:", random_search.best_params_)
-evaluate_model(xgb_model, "Tuned XGBoost")
+logger.info(f"Best XGBoost Parameters: {random_search.best_params_}")
+xgb_train_acc, xgb_test_acc = evaluate_model(xgb_model, "XGBoost")
 
+# ============================================
+# Step 9: Save Models
+# ============================================
 
-# Step 9: Save Models (Versioned)
+logger.info("Saving Models...")
 
-print("\n💾 Saving Models...")
+# Save with timestamp (versioned)
+joblib.dump(rf_model, MODELS_DIR / f"RandomForest_{timestamp}.joblib")
+joblib.dump(dt_model, MODELS_DIR / f"DecisionTree_{timestamp}.joblib")
+joblib.dump(xgb_model, MODELS_DIR / f"XGBoost_{timestamp}.joblib")
+joblib.dump(le, MODELS_DIR / f"LabelEncoder_{timestamp}.joblib")
 
-# joblib.dump(rf_model, f"{MODEL_DIR}/RandomForest_{timestamp}.joblib")
-# joblib.dump(dt_model, f"{MODEL_DIR}/DecisionTree_{timestamp}.joblib")
-# joblib.dump(xgb_model, f"{MODEL_DIR}/XGBoost_{timestamp}.joblib")
-# joblib.dump(le, f"{MODEL_DIR}/LabelEncoder_{timestamp}.joblib")
+# Save as latest (for production use)
+joblib.dump(rf_model, RANDOM_FOREST_MODEL)
+joblib.dump(dt_model, DECISION_TREE_MODEL)
+joblib.dump(xgb_model, XGBOOST_MODEL)
+joblib.dump(le, LABEL_ENCODER)
 
-# joblib.dump(rf_model, f"{MODEL_DIR}/RandomForest.joblib")
-# joblib.dump(dt_model, f"{MODEL_DIR}/DecisionTree.joblib")
-# joblib.dump(xgb_model, f"{MODEL_DIR}/XGBoost.joblib")
-# joblib.dump(le, f"{MODEL_DIR}/LabelEncoder.joblib")
+logger.info("All models saved successfully")
 
-print("✅ All models saved successfully with version timestamp.")
+# ============================================
+# Step 10: Model Comparison Summary
+# ============================================
+
+logger.info("\n" + "="*50)
+logger.info("MODEL COMPARISON SUMMARY")
+logger.info("="*50)
+
+comparison_df = pd.DataFrame({
+    'Model': ['Random Forest', 'Decision Tree', 'XGBoost'],
+    'Train Accuracy': [rf_train_acc, dt_train_acc, xgb_train_acc],
+    'Test Accuracy': [rf_test_acc, dt_test_acc, xgb_test_acc],
+    'Overfitting': [
+        rf_train_acc - rf_test_acc,
+        dt_train_acc - dt_test_acc,
+        xgb_train_acc - xgb_test_acc
+    ]
+})
+
+print("\n" + comparison_df.to_string(index=False))
+
+best_model_idx = comparison_df['Test Accuracy'].idxmax()
+best_model_name = comparison_df.loc[best_model_idx, 'Model']
+logger.info(f"\n🏆 Best Model: {best_model_name}")
+logger.info(f"✅ Training completed successfully at {timestamp}")
+logger.info("="*50)

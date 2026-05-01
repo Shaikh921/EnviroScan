@@ -1,22 +1,36 @@
+"""
+EnviroScan Dashboard
+Real-Time Air Pollution Monitoring System
+"""
+
+import sys
+from pathlib import Path
+
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
 import streamlit as st
 import pandas as pd
 import joblib
 import plotly.express as px
 import plotly.graph_objects as go
-import requests
 import io
-import os
+import logging
 from datetime import datetime
 import folium
 from streamlit_folium import st_folium
-from dotenv import load_dotenv
-load_dotenv()
 
-# ------------------------------------------------
-# API KEY
-# ------------------------------------------------
+# Import project configuration
+from config import (
+    OPENWEATHER_API_KEY, FINAL_DATASET_BALANCED, XGBOOST_MODEL, LABEL_ENCODER,
+    POLLUTION_MAP_HTML, CONFUSION_MATRIX_XGBOOST, CONFUSION_MATRIX_RF,
+    ALL_FEATURES, get_aqi_status
+)
+from utils import fetch_weather_data, fetch_pollution_data, logger
 
-OPENWEATHER_KEY = os.getenv("OPENWEATHER_KEY")
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 # ------------------------------------------------
 # PAGE CONFIG
@@ -24,11 +38,20 @@ OPENWEATHER_KEY = os.getenv("OPENWEATHER_KEY")
 
 st.set_page_config(
     page_title="EnviroScan Dashboard",
-    layout="wide"
+    layout="wide",
+    page_icon="🌍"
 )
 
 st.title("🌍 EnviroScan: Real-Time Air Pollution Monitoring System")
 st.caption(f"Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+# ------------------------------------------------
+# VALIDATE API KEY
+# ------------------------------------------------
+
+if not OPENWEATHER_API_KEY:
+    st.error("⚠️ OpenWeather API key not found. Please set OPENWEATHER_KEY in .env file")
+    st.stop()
 
 # ------------------------------------------------
 # LOAD DATASET
@@ -36,15 +59,18 @@ st.caption(f"Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 @st.cache_data
 def load_data():
-
-    df = pd.read_csv(
-        "C:/Infosys/Environ_Scan_Project/Dataset/Final_Dataset_Labeled_Balanced.csv"
-    )
-
-    df.columns = df.columns.str.strip()
-
-    return df
-
+    """Load and cache the pollution dataset"""
+    try:
+        df = pd.read_csv(FINAL_DATASET_BALANCED)
+        df.columns = df.columns.str.strip()
+        logger.info(f"Dataset loaded: {df.shape}")
+        return df
+    except FileNotFoundError:
+        st.error(f"Dataset not found: {FINAL_DATASET_BALANCED}")
+        st.stop()
+    except Exception as e:
+        st.error(f"Error loading dataset: {e}")
+        st.stop()
 
 df = load_data()
 
@@ -54,17 +80,18 @@ df = load_data()
 
 @st.cache_resource
 def load_model():
-
-    model = joblib.load(
-        "C:/Infosys/Environ_Scan_Project/Models/XGBoost.joblib"
-    )
-
-    encoder = joblib.load(
-        "C:/Infosys/Environ_Scan_Project/Models/LabelEncoder.joblib"
-    )
-
-    return model, encoder
-
+    """Load and cache the trained model and encoder"""
+    try:
+        model = joblib.load(XGBOOST_MODEL)
+        encoder = joblib.load(LABEL_ENCODER)
+        logger.info("Model and encoder loaded successfully")
+        return model, encoder
+    except FileNotFoundError as e:
+        st.error(f"Model file not found: {e}")
+        st.stop()
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        st.stop()
 
 model, encoder = load_model()
 
@@ -85,73 +112,42 @@ lat = city_row["latitude"]
 lon = city_row["longitude"]
 
 # ------------------------------------------------
-# WEATHER API
+# FETCH REAL-TIME DATA
 # ------------------------------------------------
 
 @st.cache_data(ttl=300)
 def get_weather(lat, lon):
-
-    url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={OPENWEATHER_KEY}&units=metric"
-
-    try:
-        data = requests.get(url).json()
-
-        weather = {
-            "Temperature": data["main"]["temp"],
-            "Humidity": data["main"]["humidity"],
-            "Wind Speed": data["wind"]["speed"],
-            "Wind Direction": data["wind"]["deg"]
+    """Fetch weather data with error handling"""
+    weather = fetch_weather_data(lat, lon, OPENWEATHER_API_KEY)
+    
+    if weather is None:
+        st.warning("⚠️ Unable to fetch weather data. Using default values.")
+        return {
+            "Temperature": 25.0,
+            "Humidity": 60.0,
+            "Wind Speed": 5.0,
+            "Wind Direction": 180.0
         }
-
-    except:
-
-        weather = {
-            "Temperature":0,
-            "Humidity":0,
-            "Wind Speed":0,
-            "Wind Direction":0
-        }
-
+    
     return weather
-
-
-# ------------------------------------------------
-# POLLUTION API
-# ------------------------------------------------
 
 @st.cache_data(ttl=300)
 def get_pollution(lat, lon):
-
-    url = f"https://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={OPENWEATHER_KEY}"
-
-    try:
-
-        data = requests.get(url).json()
-
-        comp = data["list"][0]["components"]
-
-        pollution = {
-            "pm25": comp["pm2_5"],
-            "pm10": comp["pm10"],
-            "no2": comp["no2"],
-            "co": comp["co"],
-            "so2": comp["so2"],
-            "o3": comp["o3"]
+    """Fetch pollution data with error handling"""
+    pollution = fetch_pollution_data(lat, lon, OPENWEATHER_API_KEY)
+    
+    if pollution is None:
+        st.warning("⚠️ Unable to fetch pollution data. Using default values.")
+        return {
+            "pm25": 50.0,
+            "pm10": 75.0,
+            "no2": 40.0,
+            "co": 500.0,
+            "so2": 20.0,
+            "o3": 60.0
         }
-
-    except:
-
-        pollution = {
-            "pm25":0,
-            "pm10":0,
-            "no2":0,
-            "co":0,
-            "so2":0,
-            "o3":0
-        }
-
+    
     return pollution
-
 
 weather = get_weather(lat, lon)
 pollution = get_pollution(lat, lon)
@@ -180,22 +176,10 @@ col4.metric("CO", co)
 # AQI STATUS
 # ------------------------------------------------
 
-def get_aqi_status(pm25):
+aqi_status, aqi_color, aqi_emoji = get_aqi_status(pm25)
+aqi_display = f"{aqi_status} {aqi_emoji}"
 
-    if pm25 <= 50:
-        return "Good 🟢"
-    elif pm25 <= 100:
-        return "Moderate 🟡"
-    elif pm25 <= 200:
-        return "Poor 🟠"
-    elif pm25 <= 300:
-        return "Very Poor 🔴"
-    else:
-        return "Hazardous 🟣"
-
-aqi = get_aqi_status(pm25)
-
-st.info(f"🌫 Air Quality Status: **{aqi}**")
+st.info(f"🌫 Air Quality Status: **{aqi_display}**")
 
 # ------------------------------------------------
 # PM2.5 GAUGE
@@ -307,14 +291,12 @@ with tab1:
 
     # st_folium(m,width=900,height=500)
 
-    map_path="C:/Infosys/Environ_Scan_Project/Model_5_Geospatial/html_exports/pollution_map.html"
-
-    if os.path.exists(map_path):
-
-        with open(map_path,"r",encoding="utf-8") as f:
-            map_html=f.read()
-
-        st.components.v1.html(map_html,height=650)
+    if POLLUTION_MAP_HTML.exists():
+        with open(POLLUTION_MAP_HTML, "r", encoding="utf-8") as f:
+            map_html = f.read()
+        st.components.v1.html(map_html, height=650)
+    else:
+        st.warning(f"⚠️ Pollution map not found at {POLLUTION_MAP_HTML}")
 
 # ------------------------------------------------
 # TAB 2 SOURCE DISTRIBUTION
@@ -337,21 +319,19 @@ with tab2:
 # ------------------------------------------------
 
 with tab3:
-
-    col1,col2 = st.columns(2)
-
-    matrix_path="C:/Infosys/Environ_Scan_Project/Images/Matrix-XGBoost.png"
-    feature_path="C:/Infosys/Environ_Scan_Project/Images/Random_forest.png"
+    col1, col2 = st.columns(2)
 
     col1.markdown("### Confusion Matrix - XGBoost")
-
-    if os.path.exists(matrix_path):
-        col1.image(matrix_path,use_container_width=True)
+    if CONFUSION_MATRIX_XGBOOST.exists():
+        col1.image(str(CONFUSION_MATRIX_XGBOOST), use_container_width=True)
+    else:
+        col1.warning("Confusion matrix image not found")
 
     col2.markdown("### Feature Importance")
-
-    if os.path.exists(feature_path):
-        col2.image(feature_path,use_container_width=True)
+    if CONFUSION_MATRIX_RF.exists():
+        col2.image(str(CONFUSION_MATRIX_RF), use_container_width=True)
+    else:
+        col2.warning("Feature importance image not found")
 
 # ------------------------------------------------
 # TAB 4 DOWNLOAD REPORT
