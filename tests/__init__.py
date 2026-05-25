@@ -1,3 +1,0 @@
-"""
-EnviroScan Test Suite
-"""

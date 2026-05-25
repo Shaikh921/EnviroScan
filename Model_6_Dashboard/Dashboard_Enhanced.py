@@ -65,17 +65,90 @@ def apply_dark_mode():
     if st.session_state.dark_mode:
         st.markdown("""
         <style>
+        /* Main app background and text */
         .stApp {
-            background-color: #0E1117;
-            color: #FAFAFA;
+            background-color: #0E1117 !important;
+            color: #FAFAFA !important;
         }
+        
+        /* Sidebar styling */
         .stSidebar {
-            background-color: #262730;
+            background-color: #262730 !important;
         }
+        
+        /* All text elements */
+        .stApp p, .stApp span, .stApp div, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
+            color: #FAFAFA !important;
+        }
+        
+        /* Metric containers */
         .stMetric {
-            background-color: #262730;
-            padding: 10px;
-            border-radius: 5px;
+            background-color: #262730 !important;
+            padding: 10px !important;
+            border-radius: 5px !important;
+        }
+        
+        /* Metric labels and values */
+        [data-testid="stMetricLabel"], [data-testid="stMetricValue"], [data-testid="stMetricDelta"] {
+            color: #FAFAFA !important;
+        }
+        
+        /* Markdown text */
+        .stMarkdown {
+            color: #FAFAFA !important;
+        }
+        
+        /* Dataframe text */
+        .stDataFrame, .stDataFrame td, .stDataFrame th {
+            color: #FAFAFA !important;
+            background-color: #262730 !important;
+        }
+        
+        /* Input fields */
+        .stTextInput input, .stSelectbox select, .stMultiSelect {
+            background-color: #262730 !important;
+            color: #FAFAFA !important;
+        }
+        
+        /* Buttons */
+        .stButton button {
+            background-color: #262730 !important;
+            color: #FAFAFA !important;
+        }
+        
+        /* Info/Warning/Success boxes */
+        .stAlert {
+            color: #0E1117 !important;
+        }
+        
+        /* Tab labels */
+        .stTabs [data-baseweb="tab"] {
+            color: #FAFAFA !important;
+        }
+        
+        /* Expander */
+        .streamlit-expanderHeader {
+            color: #FAFAFA !important;
+        }
+        
+        /* Caption text */
+        .caption {
+            color: #B0B0B0 !important;
+        }
+        
+        /* Radio button labels */
+        .stRadio label {
+            color: #FAFAFA !important;
+        }
+        
+        /* Checkbox labels */
+        .stCheckbox label {
+            color: #FAFAFA !important;
+        }
+        
+        /* Slider labels */
+        .stSlider label {
+            color: #FAFAFA !important;
         }
         </style>
         """, unsafe_allow_html=True)
