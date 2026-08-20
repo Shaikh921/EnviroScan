@@ -49,7 +49,16 @@ CONFUSION_MATRIX_XGBOOST = IMAGES_DIR / "Matrix-XGBoost.png"
 # API CONFIGURATION
 # ============================================
 
+# Check environment variable first, then fallback to Streamlit secrets
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_KEY")
+if not OPENWEATHER_API_KEY or OPENWEATHER_API_KEY == "your_api_key_here":
+    try:
+        import streamlit as st
+        if "OPENWEATHER_KEY" in st.secrets:
+            OPENWEATHER_API_KEY = st.secrets["OPENWEATHER_KEY"]
+    except Exception:
+        pass
+
 OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5"
 OPENWEATHER_ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 
