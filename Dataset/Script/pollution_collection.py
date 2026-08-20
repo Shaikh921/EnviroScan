@@ -31,7 +31,7 @@ for file in os.listdir(input_folder):
         ).reset_index()
         
         # Rename date column
-        df_pivot.rename(columns={'datetimUtc': 'timestamp'}, inplace=True)
+        df_pivot.rename(columns={'datetimeUtc': 'timestamp'}, inplace=True)
         df_pivot.rename(columns={'location_name':'city'}, inplace=True)
         
         # Append to main dataframe

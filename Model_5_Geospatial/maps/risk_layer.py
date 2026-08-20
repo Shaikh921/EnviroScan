@@ -15,7 +15,10 @@ def add_risk_zones(map_object, df):
 
     colormap.caption = "PM2.5 Pollution Level"
 
-    for _, row in df.iterrows():
+    # Aggregate by location to avoid rendering tens of thousands of overlapping circles
+    loc_df = df.groupby(["latitude", "longitude", "city"], as_index=False)["pm25"].mean()
+
+    for _, row in loc_df.iterrows():
 
         lat = row["latitude"]
         lon = row["longitude"]
@@ -25,12 +28,12 @@ def add_risk_zones(map_object, df):
 
         folium.Circle(
             location=[lat, lon],
-            radius=4000,
+            radius=5000,
             color=color,
             fill=True,
             fill_color=color,
             fill_opacity=0.6,
-            popup=f"PM2.5 Level: {pm25}"
+            popup=f"<b>City:</b> {row['city']}<br><b>Avg PM2.5:</b> {pm25:.1f}"
         ).add_to(risk_layer)
 
     risk_layer.add_to(map_object)

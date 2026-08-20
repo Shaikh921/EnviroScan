@@ -17,6 +17,9 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, "..", ".."))
 
 DATA_PATH = os.path.join(PROJECT_ROOT, "Dataset", "Final_Predictions.csv")
+FALLBACK_DATA_PATH = os.path.join(PROJECT_ROOT, "Dataset", "Final_Dataset_Labeled_Balanced.csv")
+MODEL_PATH = os.path.join(PROJECT_ROOT, "Models", "XGBoost.joblib")
+ENCODER_PATH = os.path.join(PROJECT_ROOT, "Models", "LabelEncoder.joblib")
 
 OUTPUT_PATH = os.path.join(
     PROJECT_ROOT,
@@ -32,7 +35,28 @@ OUTPUT_PATH = os.path.join(
 
 print("Loading prediction dataset...")
 
-df = pd.read_csv(DATA_PATH)
+if os.path.exists(DATA_PATH):
+    df = pd.read_csv(DATA_PATH)
+elif os.path.exists(FALLBACK_DATA_PATH):
+    print("Final_Predictions.csv not found. Loading fallback balanced dataset & predicting sources...")
+    df = pd.read_csv(FALLBACK_DATA_PATH)
+    features = ['co', 'no2', 'o3', 'pm10', 'pm25', 'so2', 'Temperature', 'Humidity', 'Wind Speed', 'Wind Direction', 'dist_to_road', 'dist_to_industry', 'dist_to_dump', 'dist_to_farmland']
+    df = df.dropna(subset=features).reset_index(drop=True)
+    if os.path.exists(MODEL_PATH) and os.path.exists(ENCODER_PATH):
+        import joblib
+        model = joblib.load(MODEL_PATH)
+        encoder = joblib.load(ENCODER_PATH)
+        preds = model.predict(df[features])
+        df['predicted_source'] = encoder.inverse_transform(preds)
+    elif 'pollution_source' in df.columns:
+        df['predicted_source'] = df['pollution_source']
+    else:
+        df['predicted_source'] = 'Natural'
+    # Save predictions file for future map runs
+    df.to_csv(DATA_PATH, index=False)
+    print(f"Saved generated predictions to {DATA_PATH}")
+else:
+    raise FileNotFoundError("Neither Final_Predictions.csv nor Final_Dataset_Labeled_Balanced.csv found!")
 
 print("Dataset loaded successfully")
 print("Total rows:", len(df))

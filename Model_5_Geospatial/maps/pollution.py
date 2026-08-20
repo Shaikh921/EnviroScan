@@ -1,15 +1,24 @@
+import os
 import pandas as pd
 import folium
 from folium.plugins import HeatMap, MarkerCluster
 
 print("Loading dataset...")
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, "..", ".."))
+
+dataset_path = os.path.join(PROJECT_ROOT, "Dataset", "Final_Dataset_Labeled_Balanced.csv")
+
+if not os.path.exists(dataset_path):
+    dataset_path = "Final_Labeled_Pollution_Dataset.csv"
+
 # ------------------------------------------------
 # Load Dataset
 # ------------------------------------------------
-df = pd.read_csv("Final_Labeled_Pollution_Dataset.csv")
+df = pd.read_csv(dataset_path)
 
-print("Dataset loaded")
+print("Dataset loaded successfully")
 
 # ------------------------------------------------
 # Create Base Map
@@ -57,16 +66,19 @@ source_colors = {
     "Natural": "purple"
 }
 
-for index, row in df.iterrows():
+# Group by location for faster rendering
+marker_df = df.groupby(["city", "latitude", "longitude"], as_index=False).first()
 
-    source = row["pollution_source"]
+for index, row in marker_df.iterrows():
+
+    source = row.get("pollution_source", "Natural")
     color = source_colors.get(source, "gray")
 
     popup_text = f"""
     <b>City:</b> {row['city']}<br>
     <b>Source:</b> {source}<br>
-    <b>PM2.5:</b> {row['pm25']}<br>
-    <b>Date:</b> {row['datetimeUtc']}
+    <b>PM2.5:</b> {row['pm25']:.1f}<br>
+    <b>Date:</b> {row.get('datetimeUtc', 'N/A')}
     """
 
     folium.Marker(
@@ -84,7 +96,7 @@ print("Source markers added")
 # ------------------------------------------------
 high_risk_layer = folium.FeatureGroup(name="High Risk Zones")
 
-high_risk = df[df["pm25"] > 150]
+high_risk = df[df["pm25"] > 150].groupby(["city", "latitude", "longitude"], as_index=False).first()
 
 for index, row in high_risk.iterrows():
 
@@ -137,6 +149,7 @@ pollution_map.get_root().html.add_child(folium.Element(legend_html))
 # ------------------------------------------------
 # Save Map
 # ------------------------------------------------
-pollution_map.save("pollution_map.html")
+output_html = os.path.join(PROJECT_ROOT, "Model_5_Geospatial", "html_exports", "pollution_map.html")
+pollution_map.save(output_html)
 
-print("Map saved as pollution_map.html")
+print(f"Map saved successfully as {output_html}")

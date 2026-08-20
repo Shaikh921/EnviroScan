@@ -236,7 +236,7 @@ Environ_Scan_Project/
 |       `-- risk_layer.py
 |
 |-- Model_6_Dashboard/
-|   `-- Dashboard.py
+|   `-- Dashboard_Enhanced.py
 |
 |-- .env
 |-- .gitignore
@@ -269,7 +269,7 @@ python ModelScript/EnviroScan_Model.py
 ### 4. Run Dashboard
 
 ```bash
-streamlit run Model_6_Dashboard/Dashboard.py
+streamlit run Model_6_Dashboard/Dashboard_Enhanced.py
 ```
 
 For detailed setup instructions, see [SETUP.md](SETUP.md)

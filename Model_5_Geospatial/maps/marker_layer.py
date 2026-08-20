@@ -29,19 +29,25 @@ def add_source_markers(map_object, df):
 
     marker_cluster = MarkerCluster()
 
-    for _, row in df.iterrows():
+    # Deduplicate by city location taking most recent record per location
+    if 'datetimeUtc' in df.columns:
+        marker_df = df.sort_values('datetimeUtc').groupby(['city', 'latitude', 'longitude'], as_index=False).last()
+    else:
+        marker_df = df.groupby(['city', 'latitude', 'longitude'], as_index=False).first()
+
+    for _, row in marker_df.iterrows():
 
         lat = row["latitude"]
         lon = row["longitude"]
-        source = row["predicted_source"]
+        source = row.get("predicted_source", row.get("pollution_source", "Natural"))
         pm25 = row["pm25"]
         city = row["city"]
-        time = row["datetimeUtc"]
+        time = row.get("datetimeUtc", "Latest")
 
         popup_text = f"""
         <b>City:</b> {city}<br>
         <b>Predicted Source:</b> {source}<br>
-        <b>PM2.5:</b> {pm25}<br>
+        <b>PM2.5:</b> {pm25:.1f}<br>
         <b>Date:</b> {time}
         """
 
