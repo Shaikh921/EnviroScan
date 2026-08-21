@@ -1436,8 +1436,15 @@ with tab3:
     
     with col2:
         st.markdown("### Confusion Matrix - Random Forest")
-        if CONFUSION_MATRIX_RF.exists():
-            st.image(str(CONFUSION_MATRIX_RF), use_container_width=True)
+        import config as cfg
+        rf_img_path = cfg.CONFUSION_MATRIX_RF if cfg.CONFUSION_MATRIX_RF.exists() else (
+            project_root / "Images" / "RF_Confusion_Matrix.png" if (project_root / "Images" / "RF_Confusion_Matrix.png").exists() else (
+                project_root / "Images" / "Random_forest.png" if (project_root / "Images" / "Random_forest.png").exists() else None
+            )
+        )
+        
+        if rf_img_path and rf_img_path.exists():
+            st.image(str(rf_img_path), use_container_width=True)
         else:
             st.warning("⚠️ Random Forest confusion matrix not found")
     
