@@ -42,7 +42,7 @@ LABEL_ENCODER = MODELS_DIR / "LabelEncoder.joblib"
 POLLUTION_MAP_HTML = GEOSPATIAL_DIR / "html_exports" / "pollution_map.html"
 
 # Image paths
-CONFUSION_MATRIX_RF = IMAGES_DIR / "Random_forest.png"
+CONFUSION_MATRIX_RF = IMAGES_DIR / "RF_Confusion_Matrix.png"
 CONFUSION_MATRIX_XGBOOST = IMAGES_DIR / "Matrix-XGBoost.png"
 
 # ============================================
