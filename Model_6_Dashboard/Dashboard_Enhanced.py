@@ -60,100 +60,200 @@ st.set_page_config(
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
 
-# Dark mode CSS
+# Dark mode CSS and theme settings
 def apply_dark_mode():
     if st.session_state.dark_mode:
         st.markdown("""
         <style>
-        /* Main app background and text */
+        /* 1. Header Bar Fix */
+        header[data-testid="stHeader"], [data-testid="stHeader"] {
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+
+        /* 2. Main App Background & Primary Text */
         .stApp {
             background-color: #0E1117 !important;
-            color: #FAFAFA !important;
+            color: #E2E8F0 !important;
         }
-        
-        /* Sidebar styling */
-        .stSidebar {
-            background-color: #262730 !important;
+
+        /* 3. Sidebar Styling */
+        [data-testid="stSidebar"], .stSidebar {
+            background-color: #161922 !important;
+            border-right: 1px solid #262B36 !important;
         }
-        
-        /* All text elements */
-        .stApp p, .stApp span, .stApp div, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
-            color: #FAFAFA !important;
+
+        /* 4. Headings & Markdown Text */
+        .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
+            color: #F8FAFC !important;
         }
-        
-        /* Metric containers */
-        .stMetric {
-            background-color: #262730 !important;
-            padding: 10px !important;
-            border-radius: 5px !important;
+        .stApp p, .stApp label, .stMarkdownContainer p {
+            color: #E2E8F0;
         }
-        
-        /* Metric labels and values */
-        [data-testid="stMetricLabel"], [data-testid="stMetricValue"], [data-testid="stMetricDelta"] {
-            color: #FAFAFA !important;
+        .stApp small, .caption, [data-testid="stCaptionContainer"] p {
+            color: #94A3B8 !important;
         }
-        
-        /* Markdown text */
-        .stMarkdown {
-            color: #FAFAFA !important;
+
+        /* 5. Buttons & Download Buttons (Fixes Invisible Text & White Background) */
+        .stButton button,
+        .stDownloadButton button,
+        [data-testid="stBaseButton-secondary"],
+        [data-testid="stBaseButton-primary"],
+        [data-testid="stDownloadButton"] button,
+        button[kind="secondary"],
+        button[kind="primary"] {
+            background-color: #1E293B !important;
+            color: #F8FAFC !important;
+            border: 1px solid #334155 !important;
+            border-radius: 8px !important;
+            padding: 0.5rem 1rem !important;
+            font-weight: 600 !important;
+            transition: all 0.2s ease-in-out !important;
         }
-        
-        /* Dataframe text */
-        .stDataFrame, .stDataFrame td, .stDataFrame th {
-            color: #FAFAFA !important;
-            background-color: #262730 !important;
+
+        .stButton button p,
+        .stButton button span,
+        .stDownloadButton button p,
+        .stDownloadButton button span,
+        [data-testid="stDownloadButton"] button p,
+        [data-testid="stDownloadButton"] button span,
+        [data-testid="stBaseButton-secondary"] p,
+        [data-testid="stBaseButton-secondary"] span,
+        [data-testid="stBaseButton-primary"] p,
+        [data-testid="stBaseButton-primary"] span {
+            color: #F8FAFC !important;
         }
-        
-        /* Input fields */
-        .stTextInput input, .stSelectbox select, .stMultiSelect {
-            background-color: #262730 !important;
-            color: #FAFAFA !important;
+
+        .stButton button:hover,
+        .stDownloadButton button:hover,
+        [data-testid="stBaseButton-secondary"]:hover,
+        [data-testid="stBaseButton-primary"]:hover,
+        [data-testid="stDownloadButton"] button:hover {
+            background-color: #2563EB !important;
+            color: #FFFFFF !important;
+            border-color: #3B82F6 !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4) !important;
         }
-        
-        /* Buttons */
-        .stButton button {
-            background-color: #262730 !important;
-            color: #FAFAFA !important;
+
+        .stButton button:hover p,
+        .stButton button:hover span,
+        .stDownloadButton button:hover p,
+        .stDownloadButton button:hover span,
+        [data-testid="stDownloadButton"] button:hover p,
+        [data-testid="stDownloadButton"] button:hover span {
+            color: #FFFFFF !important;
         }
-        
-        /* Info/Warning/Success boxes */
-        .stAlert {
-            color: #0E1117 !important;
+
+        /* 6. Metric Cards */
+        [data-testid="stMetric"], .stMetric {
+            background-color: #1A1D26 !important;
+            border: 1px solid #292D3B !important;
+            border-radius: 8px !important;
+            padding: 12px !important;
         }
-        
-        /* Tab labels */
+        [data-testid="stMetricLabel"] p, [data-testid="stMetricLabel"] {
+            color: #94A3B8 !important;
+        }
+        [data-testid="stMetricValue"] div, [data-testid="stMetricValue"] {
+            color: #F8FAFC !important;
+        }
+        [data-testid="stMetricDelta"] {
+            color: #38BDF8 !important;
+        }
+
+        /* 7. Input Controls (Selectbox, MultiSelect, Text Inputs) */
+        div[data-baseweb="select"] > div,
+        .stTextInput input,
+        .stSelectbox select,
+        div[data-baseweb="input"] {
+            background-color: #1A1D26 !important;
+            color: #F8FAFC !important;
+            border: 1px solid #333846 !important;
+            border-radius: 6px !important;
+        }
+        div[data-baseweb="popover"], div[data-baseweb="menu"], ul[role="listbox"] {
+            background-color: #1A1D26 !important;
+            border: 1px solid #333846 !important;
+            color: #F8FAFC !important;
+        }
+        li[role="option"] {
+            color: #F8FAFC !important;
+        }
+        li[role="option"]:hover, li[aria-selected="true"] {
+            background-color: #282C3A !important;
+        }
+        [data-baseweb="tag"] {
+            background-color: #2563EB !important;
+            color: #FFFFFF !important;
+        }
+
+        /* 8. Radio Buttons & Checkboxes */
+        .stRadio label p, .stCheckbox label p, .stRadio label, .stCheckbox label {
+            color: #F8FAFC !important;
+        }
+
+        /* 9. Tabs */
+        .stTabs [data-baseweb="tab-list"] {
+            background-color: transparent !important;
+            border-bottom: 2px solid #262B36 !important;
+            gap: 8px !important;
+        }
         .stTabs [data-baseweb="tab"] {
-            color: #FAFAFA !important;
+            color: #94A3B8 !important;
+            border-radius: 6px 6px 0 0 !important;
+            padding: 10px 20px !important;
+            font-weight: 500 !important;
+            background-color: transparent !important;
         }
-        
-        /* Expander */
-        .streamlit-expanderHeader {
-            color: #FAFAFA !important;
+        .stTabs [aria-selected="true"] {
+            color: #60A5FA !important;
+            background-color: #1A1D26 !important;
+            border-bottom: 2px solid #3B82F6 !important;
         }
-        
-        /* Caption text */
-        .caption {
-            color: #B0B0B0 !important;
+        .stTabs [data-baseweb="tab"] p {
+            color: inherit !important;
         }
-        
-        /* Radio button labels */
-        .stRadio label {
-            color: #FAFAFA !important;
+
+        /* 10. Expanders */
+        [data-testid="stExpander"] {
+            background-color: #1A1D26 !important;
+            border: 1px solid #262B36 !important;
+            border-radius: 8px !important;
         }
-        
-        /* Checkbox labels */
-        .stCheckbox label {
-            color: #FAFAFA !important;
+        [data-testid="stExpanderSummary"], .streamlit-expanderHeader {
+            color: #F8FAFC !important;
         }
-        
-        /* Slider labels */
-        .stSlider label {
-            color: #FAFAFA !important;
+        [data-testid="stExpanderSummary"] p, [data-testid="stExpanderSummary"] span, [data-testid="stExpanderToggleIcon"] {
+            color: #F8FAFC !important;
+        }
+
+        /* 11. Alerts / Banners */
+        [data-testid="stAlert"] {
+            border-radius: 8px !important;
+        }
+        div[data-testid="stNotification"] p, div[data-testid="stNotification"] span, .stAlert p, .stAlert span {
+            color: #F8FAFC !important;
+        }
+
+        /* 12. Dataframes & Tables */
+        [data-testid="stDataFrame"], .stDataFrame {
+            background-color: #1A1D26 !important;
+            border: 1px solid #262B36 !important;
+            border-radius: 8px !important;
+        }
+        .stDataFrame td, .stDataFrame th {
+            color: #F8FAFC !important;
+            background-color: #1A1D26 !important;
         }
         </style>
         """, unsafe_allow_html=True)
 
 apply_dark_mode()
+
+# Theme-dependent Plotly styling variables
+plotly_template = 'plotly_dark' if st.session_state.dark_mode else 'plotly_white'
+chart_text_color = '#F8FAFC' if st.session_state.dark_mode else '#262730'
+chart_bg = 'rgba(0,0,0,0)'
 
 # ------------------------------------------------
 # TITLE AND HEADER
@@ -457,12 +557,18 @@ if view_mode == "Single City":
                     {'range': [200, 300], 'color': "red"}
                 ],
                 'threshold': {
-                    'line': {'color': "black", 'width': 4},
+                    'line': {'color': "black" if not st.session_state.dark_mode else "white", 'width': 4},
                     'thickness': 0.75,
                     'value': pm25
                 }
             }
         ))
+        fig_gauge.update_layout(
+            template=plotly_template,
+            paper_bgcolor=chart_bg,
+            plot_bgcolor=chart_bg,
+            font=dict(color=chart_text_color)
+        )
         
         st.plotly_chart(fig_gauge, use_container_width=True)
     
@@ -510,7 +616,11 @@ if view_mode == "Single City":
             title=f"Pollution Trends in {city}",
             xaxis_title="Time",
             yaxis_title="Concentration (μg/m³)",
-            hovermode='x unified'
+            hovermode='x unified',
+            template=plotly_template,
+            paper_bgcolor=chart_bg,
+            plot_bgcolor=chart_bg,
+            font=dict(color=chart_text_color)
         )
         
         st.plotly_chart(fig_trend, use_container_width=True)
@@ -621,6 +731,12 @@ elif view_mode == "Multi-City Comparison":
             color='PM2.5',
             color_continuous_scale='Reds'
         )
+        fig_pm25.update_layout(
+            template=plotly_template,
+            paper_bgcolor=chart_bg,
+            plot_bgcolor=chart_bg,
+            font=dict(color=chart_text_color)
+        )
         st.plotly_chart(fig_pm25, use_container_width=True)
         
         # Multi-pollutant comparison
@@ -639,7 +755,11 @@ elif view_mode == "Multi-City Comparison":
             title='All Pollutants Comparison',
             xaxis_title='City',
             yaxis_title='Concentration (μg/m³)',
-            barmode='group'
+            barmode='group',
+            template=plotly_template,
+            paper_bgcolor=chart_bg,
+            plot_bgcolor=chart_bg,
+            font=dict(color=chart_text_color)
         )
         
         st.plotly_chart(fig_multi, use_container_width=True)
@@ -804,7 +924,10 @@ elif view_mode == "Historical Analysis":
             hovermode='x unified',
             height=500,
             showlegend=True,
-            template='plotly_white'
+            template=plotly_template,
+            paper_bgcolor=chart_bg,
+            plot_bgcolor=chart_bg,
+            font=dict(color=chart_text_color)
         )
         
         st.plotly_chart(fig_ts, use_container_width=True)
@@ -826,7 +949,7 @@ elif view_mode == "Historical Analysis":
             name='PM2.5',
             marker=dict(
                 color='#FF4B4B',
-                line=dict(color='white', width=1)
+                line=dict(color='white' if not st.session_state.dark_mode else '#1E222D', width=1)
             )
         ))
         
@@ -835,7 +958,10 @@ elif view_mode == "Historical Analysis":
             xaxis_title='PM2.5 (μg/m³)',
             yaxis_title='Frequency',
             height=400,
-            template='plotly_white',
+            template=plotly_template,
+            paper_bgcolor=chart_bg,
+            plot_bgcolor=chart_bg,
+            font=dict(color=chart_text_color),
             showlegend=False
         )
         
@@ -856,7 +982,10 @@ elif view_mode == "Historical Analysis":
             title='PM2.5 Box Plot',
             yaxis_title='PM2.5 (μg/m³)',
             height=400,
-            template='plotly_white',
+            template=plotly_template,
+            paper_bgcolor=chart_bg,
+            plot_bgcolor=chart_bg,
+            font=dict(color=chart_text_color),
             showlegend=False
         )
         
@@ -889,7 +1018,7 @@ elif view_mode == "Historical Analysis":
                 zmax=1,
                 text=corr_data.values.round(2),
                 texttemplate='%{text}',
-                textfont={"size": 14, "color": "black"},
+                textfont={"size": 14, "color": "white" if st.session_state.dark_mode else "black"},
                 colorbar=dict(
                     title="Correlation",
                     tickmode="linear",
@@ -904,14 +1033,16 @@ elif view_mode == "Historical Analysis":
                     'text': 'Pollutant Correlation Heatmap',
                     'x': 0.5,
                     'xanchor': 'center',
-                    'font': {'size': 18, 'color': '#262730'}
+                    'font': {'size': 18, 'color': chart_text_color}
                 },
                 xaxis_title='Pollutants',
                 yaxis_title='Pollutants',
                 height=600,
                 width=800,
-                template='plotly_white',
-                font=dict(size=12)
+                template=plotly_template,
+                paper_bgcolor=chart_bg,
+                plot_bgcolor=chart_bg,
+                font=dict(size=12, color=chart_text_color)
             )
             
             st.plotly_chart(fig_corr, use_container_width=True)
@@ -1009,13 +1140,16 @@ elif view_mode == "Historical Analysis":
                 'text': 'Normalized Pollutant Trends (0-1 Scale)',
                 'x': 0.5,
                 'xanchor': 'center',
-                'font': {'size': 18}
+                'font': {'size': 18, 'color': chart_text_color}
             },
             xaxis_title='Date & Time',
             yaxis_title='Normalized Value (0 = Min, 1 = Max)',
             height=500,
             hovermode='x unified',
-            template='plotly_white',
+            template=plotly_template,
+            paper_bgcolor=chart_bg,
+            plot_bgcolor=chart_bg,
+            font=dict(color=chart_text_color),
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
@@ -1109,7 +1243,11 @@ if view_mode == "Forecast":
             title=f'{forecast_hours}-Hour PM2.5 Forecast',
             xaxis_title='Time',
             yaxis_title='PM2.5 (μg/m³)',
-            hovermode='x unified'
+            hovermode='x unified',
+            template=plotly_template,
+            paper_bgcolor=chart_bg,
+            plot_bgcolor=chart_bg,
+            font=dict(color=chart_text_color)
         )
         
         st.plotly_chart(fig_forecast, use_container_width=True)
@@ -1199,6 +1337,11 @@ with tab2:
             color_discrete_sequence=px.colors.qualitative.Set3
         )
         
+        fig_pie.update_layout(
+            template=plotly_template,
+            paper_bgcolor=chart_bg,
+            font=dict(color=chart_text_color)
+        )
         fig_pie.update_traces(
             textposition='inside',
             textinfo='percent+label',
@@ -1223,7 +1366,11 @@ with tab2:
         fig_bar.update_layout(
             xaxis_title='Pollution Source',
             yaxis_title='Number of Occurrences',
-            showlegend=False
+            showlegend=False,
+            template=plotly_template,
+            paper_bgcolor=chart_bg,
+            plot_bgcolor=chart_bg,
+            font=dict(color=chart_text_color)
         )
         
         st.plotly_chart(fig_bar, use_container_width=True)
