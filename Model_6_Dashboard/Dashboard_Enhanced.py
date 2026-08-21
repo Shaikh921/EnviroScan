@@ -292,6 +292,47 @@ plotly_template = 'plotly_dark' if st.session_state.dark_mode else 'plotly_white
 chart_text_color = '#F8FAFC' if st.session_state.dark_mode else '#262730'
 chart_bg = 'rgba(0,0,0,0)'
 
+def style_plotly_chart(fig, title_text=None, xaxis_title=None, yaxis_title=None, height=None):
+    """Apply high-contrast dark/light mode styling to Plotly figures"""
+    layout_updates = {
+        'template': plotly_template,
+        'paper_bgcolor': 'rgba(0,0,0,0)',
+        'plot_bgcolor': 'rgba(0,0,0,0)',
+        'font': dict(color=chart_text_color, family="sans-serif", size=13),
+        'legend': dict(
+            font=dict(color=chart_text_color, size=13)
+        ),
+        'xaxis': dict(
+            title_font=dict(color=chart_text_color, size=14),
+            tickfont=dict(color=chart_text_color, size=12),
+            gridcolor='#2D313E' if st.session_state.dark_mode else '#E5E7EB',
+            zerolinecolor='#2D313E' if st.session_state.dark_mode else '#E5E7EB'
+        ),
+        'yaxis': dict(
+            title_font=dict(color=chart_text_color, size=14),
+            tickfont=dict(color=chart_text_color, size=12),
+            gridcolor='#2D313E' if st.session_state.dark_mode else '#E5E7EB',
+            zerolinecolor='#2D313E' if st.session_state.dark_mode else '#E5E7EB'
+        )
+    }
+    
+    if title_text:
+        layout_updates['title'] = dict(
+            text=title_text,
+            font=dict(color=chart_text_color, size=18, family="sans-serif"),
+            x=0.0,
+            xanchor='left'
+        )
+    if xaxis_title:
+        layout_updates['xaxis']['title'] = xaxis_title
+    if yaxis_title:
+        layout_updates['yaxis']['title'] = yaxis_title
+    if height:
+        layout_updates['height'] = height
+        
+    fig.update_layout(**layout_updates)
+    return fig
+
 # ------------------------------------------------
 # TITLE AND HEADER
 # ------------------------------------------------
@@ -600,12 +641,7 @@ if view_mode == "Single City":
                 }
             }
         ))
-        fig_gauge.update_layout(
-            template=plotly_template,
-            paper_bgcolor=chart_bg,
-            plot_bgcolor=chart_bg,
-            font=dict(color=chart_text_color)
-        )
+        style_plotly_chart(fig_gauge)
         
         st.plotly_chart(fig_gauge, use_container_width=True)
     
@@ -649,16 +685,13 @@ if view_mode == "Single City":
             line=dict(color='blue', width=2)
         ))
         
-        fig_trend.update_layout(
-            title=f"Pollution Trends in {city}",
+        style_plotly_chart(
+            fig_trend,
+            title_text=f"Pollution Trends in {city}",
             xaxis_title="Time",
-            yaxis_title="Concentration (μg/m³)",
-            hovermode='x unified',
-            template=plotly_template,
-            paper_bgcolor=chart_bg,
-            plot_bgcolor=chart_bg,
-            font=dict(color=chart_text_color)
+            yaxis_title="Concentration (μg/m³)"
         )
+        fig_trend.update_layout(hovermode='x unified')
         
         st.plotly_chart(fig_trend, use_container_width=True)
     
@@ -768,11 +801,11 @@ elif view_mode == "Multi-City Comparison":
             color='PM2.5',
             color_continuous_scale='Reds'
         )
-        fig_pm25.update_layout(
-            template=plotly_template,
-            paper_bgcolor=chart_bg,
-            plot_bgcolor=chart_bg,
-            font=dict(color=chart_text_color)
+        style_plotly_chart(
+            fig_pm25,
+            title_text='PM2.5 Levels Comparison',
+            xaxis_title='City',
+            yaxis_title='PM2.5 (μg/m³)'
         )
         st.plotly_chart(fig_pm25, use_container_width=True)
         
@@ -788,16 +821,13 @@ elif view_mode == "Multi-City Comparison":
                 y=comparison_df[pollutant]
             ))
         
-        fig_multi.update_layout(
-            title='All Pollutants Comparison',
+        style_plotly_chart(
+            fig_multi,
+            title_text='All Pollutants Comparison',
             xaxis_title='City',
-            yaxis_title='Concentration (μg/m³)',
-            barmode='group',
-            template=plotly_template,
-            paper_bgcolor=chart_bg,
-            plot_bgcolor=chart_bg,
-            font=dict(color=chart_text_color)
+            yaxis_title='Concentration (μg/m³)'
         )
+        fig_multi.update_layout(barmode='group')
         
         st.plotly_chart(fig_multi, use_container_width=True)
         
@@ -954,18 +984,14 @@ elif view_mode == "Historical Analysis":
         fig_ts.add_hline(y=200, line_dash="dot", line_color="orange", 
                         annotation_text="Poor", annotation_position="right")
         
-        fig_ts.update_layout(
-            title=f'PM2.5 Levels Over Time - {city}',
+        style_plotly_chart(
+            fig_ts,
+            title_text=f'PM2.5 Levels Over Time - {city}',
             xaxis_title='Date & Time',
             yaxis_title='PM2.5 Concentration (μg/m³)',
-            hovermode='x unified',
-            height=500,
-            showlegend=True,
-            template=plotly_template,
-            paper_bgcolor=chart_bg,
-            plot_bgcolor=chart_bg,
-            font=dict(color=chart_text_color)
+            height=500
         )
+        fig_ts.update_layout(hovermode='x unified', showlegend=True)
         
         st.plotly_chart(fig_ts, use_container_width=True)
     else:
@@ -990,17 +1016,14 @@ elif view_mode == "Historical Analysis":
             )
         ))
         
-        fig_hist.update_layout(
-            title='PM2.5 Distribution',
+        style_plotly_chart(
+            fig_hist,
+            title_text='PM2.5 Distribution',
             xaxis_title='PM2.5 (μg/m³)',
             yaxis_title='Frequency',
-            height=400,
-            template=plotly_template,
-            paper_bgcolor=chart_bg,
-            plot_bgcolor=chart_bg,
-            font=dict(color=chart_text_color),
-            showlegend=False
+            height=400
         )
+        fig_hist.update_layout(showlegend=False)
         
         st.plotly_chart(fig_hist, use_container_width=True)
     
@@ -1015,16 +1038,13 @@ elif view_mode == "Historical Analysis":
             boxmean='sd'  # Show mean and standard deviation
         ))
         
-        fig_box.update_layout(
-            title='PM2.5 Box Plot',
+        style_plotly_chart(
+            fig_box,
+            title_text='PM2.5 Box Plot',
             yaxis_title='PM2.5 (μg/m³)',
-            height=400,
-            template=plotly_template,
-            paper_bgcolor=chart_bg,
-            plot_bgcolor=chart_bg,
-            font=dict(color=chart_text_color),
-            showlegend=False
+            height=400
         )
+        fig_box.update_layout(showlegend=False)
         
         st.plotly_chart(fig_box, use_container_width=True)
     
@@ -1065,21 +1085,12 @@ elif view_mode == "Historical Analysis":
                 hovertemplate='%{x} vs %{y}<br>Correlation: %{z:.3f}<extra></extra>'
             ))
             
-            fig_corr.update_layout(
-                title={
-                    'text': 'Pollutant Correlation Heatmap',
-                    'x': 0.5,
-                    'xanchor': 'center',
-                    'font': {'size': 18, 'color': chart_text_color}
-                },
+            style_plotly_chart(
+                fig_corr,
+                title_text='Pollutant Correlation Heatmap',
                 xaxis_title='Pollutants',
                 yaxis_title='Pollutants',
-                height=600,
-                width=800,
-                template=plotly_template,
-                paper_bgcolor=chart_bg,
-                plot_bgcolor=chart_bg,
-                font=dict(size=12, color=chart_text_color)
+                height=600
             )
             
             st.plotly_chart(fig_corr, use_container_width=True)
@@ -1172,21 +1183,15 @@ elif view_mode == "Historical Analysis":
                 hovertemplate=f'<b>{pollutant.upper()}</b><br>Normalized: %{{y:.3f}}<br>Date: %{{x}}<extra></extra>'
             ))
         
-        fig_multi.update_layout(
-            title={
-                'text': 'Normalized Pollutant Trends (0-1 Scale)',
-                'x': 0.5,
-                'xanchor': 'center',
-                'font': {'size': 18, 'color': chart_text_color}
-            },
+        style_plotly_chart(
+            fig_multi,
+            title_text='Normalized Pollutant Trends (0-1 Scale)',
             xaxis_title='Date & Time',
             yaxis_title='Normalized Value (0 = Min, 1 = Max)',
-            height=500,
+            height=500
+        )
+        fig_multi.update_layout(
             hovermode='x unified',
-            template=plotly_template,
-            paper_bgcolor=chart_bg,
-            plot_bgcolor=chart_bg,
-            font=dict(color=chart_text_color),
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
@@ -1276,16 +1281,13 @@ if view_mode == "Forecast":
             line=dict(color='red', width=2, dash='dash')
         ))
         
-        fig_forecast.update_layout(
-            title=f'{forecast_hours}-Hour PM2.5 Forecast',
+        style_plotly_chart(
+            fig_forecast,
+            title_text=f'{forecast_hours}-Hour PM2.5 Forecast',
             xaxis_title='Time',
-            yaxis_title='PM2.5 (μg/m³)',
-            hovermode='x unified',
-            template=plotly_template,
-            paper_bgcolor=chart_bg,
-            plot_bgcolor=chart_bg,
-            font=dict(color=chart_text_color)
+            yaxis_title='PM2.5 (μg/m³)'
         )
+        fig_forecast.update_layout(hovermode='x unified')
         
         st.plotly_chart(fig_forecast, use_container_width=True)
         
@@ -1374,10 +1376,9 @@ with tab2:
             color_discrete_sequence=px.colors.qualitative.Set3
         )
         
-        fig_pie.update_layout(
-            template=plotly_template,
-            paper_bgcolor=chart_bg,
-            font=dict(color=chart_text_color)
+        style_plotly_chart(
+            fig_pie,
+            title_text="Distribution of Pollution Sources"
         )
         fig_pie.update_traces(
             textposition='inside',
@@ -1400,15 +1401,13 @@ with tab2:
             color_continuous_scale='Reds'
         )
         
-        fig_bar.update_layout(
+        style_plotly_chart(
+            fig_bar,
+            title_text='Pollution Source Frequency',
             xaxis_title='Pollution Source',
-            yaxis_title='Number of Occurrences',
-            showlegend=False,
-            template=plotly_template,
-            paper_bgcolor=chart_bg,
-            plot_bgcolor=chart_bg,
-            font=dict(color=chart_text_color)
+            yaxis_title='Number of Occurrences'
         )
+        fig_bar.update_layout(showlegend=False)
         
         st.plotly_chart(fig_bar, use_container_width=True)
         
