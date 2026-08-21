@@ -243,8 +243,9 @@ if st.sidebar.button("🔄 Update Data from API", help="Fetch latest pollution d
         try:
             # Import the updater
             import subprocess
+            updater_script = project_root / "Dataset" / "Script" / "auto_data_updater.py"
             result = subprocess.run(
-                ["python", "Dataset/Script/auto_data_updater.py", "--mode", "once"],
+                [sys.executable, str(updater_script), "--mode", "once"],
                 capture_output=True,
                 text=True,
                 timeout=120
