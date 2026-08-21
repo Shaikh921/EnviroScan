@@ -161,7 +161,8 @@ def apply_dark_mode():
             color: #38BDF8 !important;
         }
 
-        /* 7. Input Controls (Selectbox, MultiSelect, Text Inputs) */
+        /* 7. Input Controls & Selectbox Dropdown Menu Fix */
+        div[data-baseweb="select"],
         div[data-baseweb="select"] > div,
         .stTextInput input,
         .stSelectbox select,
@@ -171,17 +172,53 @@ def apply_dark_mode():
             border: 1px solid #333846 !important;
             border-radius: 6px !important;
         }
-        div[data-baseweb="popover"], div[data-baseweb="menu"], ul[role="listbox"] {
+
+        /* Selectbox container text & icons */
+        div[data-baseweb="select"] * {
+            color: #F8FAFC !important;
+        }
+
+        /* Dropdown Popover Container (BaseWeb listbox popover) */
+        div[data-baseweb="popover"],
+        div[data-baseweb="popover"] > div,
+        div[data-baseweb="menu"],
+        ul[role="listbox"],
+        ul[data-baseweb="menu"] {
             background-color: #1A1D26 !important;
+            background: #1A1D26 !important;
             border: 1px solid #333846 !important;
             color: #F8FAFC !important;
         }
-        li[role="option"] {
+
+        /* Dropdown List Items (Unselected & Selected) */
+        li[role="option"],
+        div[data-baseweb="option"],
+        [data-baseweb="menu"] li,
+        [role="option"] {
+            background-color: #1A1D26 !important;
+            background: #1A1D26 !important;
             color: #F8FAFC !important;
         }
-        li[role="option"]:hover, li[aria-selected="true"] {
-            background-color: #282C3A !important;
+
+        /* All nested text inside dropdown options */
+        li[role="option"] *,
+        div[data-baseweb="option"] *,
+        [role="option"] * {
+            color: #F8FAFC !important;
         }
+
+        /* Hover & Active option states */
+        li[role="option"]:hover,
+        li[role="option"]:hover *,
+        li[aria-selected="true"],
+        li[aria-selected="true"] *,
+        div[data-baseweb="option"]:hover,
+        div[data-baseweb="option"]:hover * {
+            background-color: #2563EB !important;
+            background: #2563EB !important;
+            color: #FFFFFF !important;
+        }
+
         [data-baseweb="tag"] {
             background-color: #2563EB !important;
             color: #FFFFFF !important;
